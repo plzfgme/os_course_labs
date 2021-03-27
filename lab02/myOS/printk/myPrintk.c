@@ -22,7 +22,7 @@ int myPrintk(int color,const char *format, ...){
 	printed = vsprintf(kBuf, format, args);
 	va_end(args);
     uart_put_chars(kBuf);
-    append2screen(kBuf, color);
+    // append2screen(kBuf, color);
 }
 
 char uBuf[400];
