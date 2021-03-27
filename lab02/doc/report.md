@@ -62,10 +62,44 @@ for (y = 0; y < 25; y++){
 
 ![5](figs/5.png)
 
+----
+
 ## 源代码说明
+
+### 目录组织
+
+![6](figs/6.png)
+
+大体上分为 multibootheader、myOS 和 userApp 三个目录，分别负责 multiboot 协议头、操作系统及相关函数和用户应用程序。
+
+myOS 中，dev 目录内有与硬件相关的函数（文件名表示对应设备），i386 目录内是汇编指令的 c 函数包装（io.c 内是 `inb` 和 `outb`），printk 内是打印相关函数（其中 vsprintf.c 内是移植的字符串格式化函数，myPrintk.c 内是具体的打印函数）。
+
+### Makefile 组织
+
+主要内容均在根目录的 Makefile 中，其他目录下的 Makefile 主要是为文件位置定义变量。
+
+----
 
 ## 代码布局空间说明
 
+使用了自动链接，没有提供 ld 文件。
+
+分为multiboot_header 段、text 段、data 段和 bss 段，multiboot_header 段放置 multiboot 协议头，text 段放置代码，data 段放置数据，bss 段放置程序运行时的静态变量。
+
+----
+
 ## 编译过程说明
 
+首先把各个 .c 和 .S 文件均编译为 .o 文件，然后链接各个 .o 文件生成 myOS.elf 文件放到 output 目录中。
+
 ## 运行和运行结果说明  
+
+运行给出的测试用例：
+
+![7](figs/7.png)
+
+运行自己的测试用例：
+
+![8](figs/8.png)
+
+均得到了预期结果。
