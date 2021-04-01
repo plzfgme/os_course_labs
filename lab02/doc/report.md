@@ -60,7 +60,7 @@ for (y = 0; y < 25; y++){
 
 `vsprintf`：移植自 linux，并自行用指针实现了 `va_list`、`va_arg` 等需要的宏。
 
-`myPrint[kf]`：
+`myPrint[kf]`（这里假定内核使用的 myPrintk 在串口输出，用户使用的 myPrintf 在屏幕输出，如果需要改动稍微修改下代码即可（去掉注释））：
 
 ![5](figs/5.png)
 

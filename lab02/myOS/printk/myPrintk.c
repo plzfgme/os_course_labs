@@ -18,6 +18,7 @@ int myPrintk(int color,const char *format, ...){
 	va_list args;
 	int printed;
 
+	// 格式化
 	va_start(args, format);
 	printed = vsprintf(kBuf, format, args);
 	va_end(args);
@@ -30,9 +31,11 @@ int myPrintf(int color,const char *format, ...){
 	va_list args;
 	int printed;
 
+	// 格式化
 	va_start(args, format);
 	printed = vsprintf(uBuf, format, args);
 	va_end(args);
 
+	// uart_put_chars(kBuf);
     append2screen(uBuf, color);
 }
