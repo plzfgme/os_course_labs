@@ -18,7 +18,7 @@ PB18061414 郭宇韬
 
 > multibootheader 和其他汇编代码使用了助教给出的代码。multibootheader 与自己的实现基本相同，但减少了一些不必要的字段。
 
-操作系统首通过 multiboot 协议启动，为运行 c 语言编译的程序建立了一个堆栈，并初始化了 BSS 段（用于放置静态变量），之后转到 osStart （此处开始以 c 语言来实现，此前均为汇编语言），osStart 会打印一些提示信息并调用用户主程序 myMain，执行结束后（实际上之后会进入一个死循环，不会运行到 shut_down）操作系统运行完毕。
+操作系统首通过 multiboot 协议启动，为运行 c 语言编译的程序建立了一个堆栈，并初始化了 BSS 段（用于放置未初始化全局或静态局部变量），之后转到 osStart （此处开始以 c 语言来实现，此前均为汇编语言），osStart 会打印一些提示信息并调用用户主程序 myMain，执行结束后（实际上之后会进入一个死循环，不会运行到 shut_down）操作系统运行完毕。
 
 ----
 
@@ -86,7 +86,7 @@ myOS 中，dev 目录内有与硬件相关的函数（文件名表示对应设�
 
 使用了自动链接，没有提供 ld 文件。
 
-分为multiboot_header 段、text 段、data 段和 bss 段，multiboot_header 段放置 multiboot 协议头，text 段放置代码，data 段放置数据，bss 段放置程序运行时的静态变量。
+分为multiboot_header 段、text 段、data 段和 bss 段，multiboot_header 段放置 multiboot 协议头，text 段放置代码，data 段放置已初始化全局或静态局部变量，bss 段放置未初始化全局或静态局部变量。
 
 ----
 
