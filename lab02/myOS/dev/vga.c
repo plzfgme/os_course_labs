@@ -12,7 +12,7 @@ struct vga_char{
     char bc: 4;
 };
 
-static struct vga_char * const VGA_BASE = (struct vga_char*)0xb8000;
+static struct vga_char * const VGA_BASE = (struct vga_char*)0xb8000;    // vga 位置
 
 struct coord
 {
@@ -20,16 +20,18 @@ struct coord
     int y;
 };
 
-static struct coord cursor = {0, 0};
+static struct coord cursor = {0, 0};    // 光标位置
 
 void set_cursor(void) {
     unsigned short tmp;
 
     tmp = cursor.y * 80 + cursor.x;
 
+    // 高位字节
     outb(0x3d4, 0xe);
     outb(0x3d5, tmp >> 8);
 
+    // 低位字节
     outb(0x3d4, 0xf);
     outb(0x3d5, tmp);
 }
@@ -39,17 +41,20 @@ void clear_screen(void) {
     
     struct vga_char blank = {' ', 0xf, 0};
 
+    // 赋值为空白
     for (y = 0; y < 25; y++){
         for (x = 0; x < 80; x++){
             VGA_BASE[y*80 + x] = blank;
         }
     }
 
+    // 光标设置
     cursor.x = 0;
     cursor.y = 0;
     set_cursor();
 }
 
+// 复制内存
 void *memcpy(void *dest, const void *src, unsigned int count){
     const unsigned char *sp = (const unsigned char *)src;
     unsigned char *dp = (unsigned char *)dest;
@@ -58,6 +63,7 @@ void *memcpy(void *dest, const void *src, unsigned int count){
     return dest;
 }
 
+// 设置内存
 unsigned short *memsetw(unsigned short *dest, unsigned short val, unsigned int count){
     unsigned short *temp = (unsigned short *)dest;
 
@@ -68,8 +74,9 @@ unsigned short *memsetw(unsigned short *dest, unsigned short val, unsigned int c
 void scroll(void) {
     unsigned short blank = ' ' | ((0<<4)|7)<<8;
   
-    memcpy (VGA_BASE, VGA_BASE + 80, 80*24*2);
-    memsetw((unsigned short *)VGA_BASE + 80*24, blank, 80);
+    memcpy (VGA_BASE, VGA_BASE + 80, 80*24*2);  // 把后24行复制上去
+    memsetw((unsigned short *)VGA_BASE + 80*24, blank, 80); // 置空行
+    // 设置光标
     cursor.y--;
     set_cursor();
 }
@@ -107,9 +114,11 @@ void putc_color(char ch, int color) {
             cursor.x = (cursor.x + 1) % 80;      
     }
 
+    // 是否滚屏
     if (cursor.y >= 25) {
         scroll();
     }
+    // 设置光标
     set_cursor();
 }
 
