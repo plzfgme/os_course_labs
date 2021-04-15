@@ -36,7 +36,7 @@ void scroll_screen(void)
     uint16_t blank = ' ' | ((0<<4)|7)<<8;
   
     memcpy(vga_base_p, (uint16_t *)VGA_BASE + VGA_COL, VGA_COL*(VGA_ROW - 1)*2);
-    memsetw(vga_bottom_bar_p, blank, VGA_COL);
+    memsetw(vga_bottom_bar_p - VGA_COL, blank, VGA_COL);
 
     --row;
     update_cursor();
