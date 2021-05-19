@@ -19,12 +19,18 @@ void showeFPartition(struct eFPartition *efp){
 	myPrintk(0x5,"eFPartition(start=0x%x, totalN=0x%x, perSize=0x%x, firstFree=0x%x)\n", efp, efp->totalN, efp->perSize, efp->firstFree);
 }
 
-void eFPartitionWalkByAddr(unsigned long efpHandler){
+void eFPartitionWalkByAddr(unsigned long efpHandler) {
 	//本函数需要实现！！！
 	/*本函数是为了方便查看和调试的。功能：1、打印eFPartiiton结构体的信息，可以调用上面的showeFPartition函数。2、遍历每一个EEB，打印出他们的地址以及下一个EEB的地址（可以调用上面的函数showEEB）
 
 	*/
-
+	struct eFPartition * efpp = (struct eFPartition *)efpHandler;
+	showeFPartition(efpp);
+	struct EEB * eeb = (struct EEB *)(efpp->firstFree);
+	while (eeb != (struct EEB *)0) {
+		showEEB(eeb);
+		eeb = (struct EEB *)(eeb->next_start);
+	}	
 }
 
 
@@ -34,6 +40,10 @@ unsigned long eFPartitionTotalSize(unsigned long perSize, unsigned long n){
 	最后别忘记加上eFPartition这个数据结构的大小，因为它也占一定的空间
 
 	*/
+	while (perSize % 8 != 0 || perSize < sizeof (struct eFPartition)) {
+		++perSize;
+	}
+	return sizeof (struct eFPartition) + n * perSize;
 }
 
 unsigned long eFPartitionInit(unsigned long start, unsigned long perSize, unsigned long n){
@@ -42,6 +52,30 @@ unsigned long eFPartitionInit(unsigned long start, unsigned long perSize, unsign
 	第一步需要创建一个eFPartition结构体，需要注意的是结构体的persize不是直接传入的参数perSize，需要对齐。结构体的nextStart也是需要考虑一下结构体本身的大小。
 	第二步就是对每一块的内存创建一个EEB，将他们连起来构成一个链。注意最后一块的EEB的nextstart应该是0
 	*/
+	/*
+	while ((start + sizeof (struct eFPartition)) % 8 != 0) {
+		++start;
+	}
+	*/
+	struct eFPartition * efpp = (struct eFPartition *)start;
+	while (perSize % 8 != 0 || perSize < sizeof (struct eFPartition)) {
+		++perSize;
+	}
+	efpp->perSize = perSize;
+	efpp->totalN = n;
+	if (n == 0) {
+		efpp->firstFree = 0;
+		return start;
+	}
+	efpp->firstFree = start + sizeof (struct eFPartition);
+	struct EEB * eeb = (struct EEB *)(efpp->firstFree);
+	while (n > 0) {
+		eeb->next_start = (unsigned long)eeb + perSize;
+		eeb = (struct EEB *)(eeb->next_start);
+		--n;
+	}
+	eeb->next_start = 0;
+	return start;
 }
 
 
@@ -49,13 +83,13 @@ unsigned long eFPartitionAlloc(unsigned long EFPHandler){
 	//本函数需要实现！！！
 	/*本函数分配一个空闲块的内存并返回相应的地址，EFPHandler表示整个内存的首地址
 	*/
-	struct eFPartition *efp = (struct eFPartition *)EFPHandler;
-	unsigned firstEEB = efp->firstFree;
-	if (firstEEB == 0) {
+	struct eFPartition * efpp = (struct eFPartition *)EFPHandler;
+	if (efpp->firstFree == 0) {
 		return 0;
 	}
-	efp->firstFree = ((struct EEB *)(firstEEB))->next_start;
-	return firstEEB;
+	struct EEB * eeb = (struct EEB *)(efpp->firstFree);
+	efpp->firstFree = eeb->next_start;
+	return (unsigned long)eeb;
 }
 
 
@@ -64,6 +98,26 @@ unsigned long eFPartitionFree(unsigned long EFPHandler,unsigned long mbStart){
 	/*初始化内存
 	free掉mbstart之前的内存，mbstart为第一个空闲块的地址。也要更新EBB组成的链表。
 	*/
+	struct eFPartition * efpp = (struct eFPartition *)EFPHandler;
+	unsigned long n = efpp->totalN;
+	struct EEB * new_next_eeb = (struct EEB *)(efpp->firstFree);
+	while (new_next_eeb != (struct EEB *)0 && (unsigned long)new_next_eeb <= mbStart)
+	{
+		new_next_eeb = (struct EEB *)(new_next_eeb->next_start);
+	}
 	
+	struct EEB * pre = 0;
+	struct EEB * eeb = (struct EEB *)((unsigned long)efpp + sizeof (struct eFPartition));
+	while ((unsigned long)eeb <= mbStart && n) {
+		if (pre != (struct EEB *)0) {
+			pre->next_start = (unsigned long)eeb;
+		} else {
+			efpp->firstFree = (unsigned long)eeb;
+		}
+		pre = eeb;
+		eeb = (struct EEB *)((unsigned long)eeb + efpp->perSize);
+		--n;
+	}
+	pre->next_start = (unsigned long)new_next_eeb;
 	return 1;
 }
